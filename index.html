@@ -1,0 +1,24 @@
+&lt;!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Video Streaming With Node</title>
+        <style>
+            body {
+                margin: 40px auto;
+                max-width: 650px;
+                background-color: rgb(14, 14, 14);
+            }
+        </style>
+    </head>
+    <body>
+        <video id="videoPlayer" width="50%" controls>
+            <!-- <source src="/videoDirectLink/" type="video/mp4" /> -->
+            <source src="/video3/" type="video/mp4" />
+            <!-- HLS NOT YET SUPPORTED ON HTML VIDEO??? -->
+            <!-- <source src="/videoHLS/Sample.m3u8" type="application/x-mpegURL" /> -->
+        </video>
+    </body>
+</html>
