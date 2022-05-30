@@ -1,8 +1,10 @@
+var aws = require('aws-sdk')
 const PORT = process.env.PORT || 3003;
 
 //PIPELINE PREVENT MEMORY LEAK
 // const videoPath = "videos/Sample.mp4";
 const videoPath = "videos/SampleWKeyFrame.mp4";
+const videoPathS3 = "SampleWKeyFrame.mp4";
 // const videoPath = "videos/720Video.mp4";
 
 // var megaByteMultipler = 25;
@@ -155,6 +157,30 @@ app.get('/videoDirectLink', function(req, res){
     i++;
     console.log(`videoDirectLink hit ${i}`);
     res.download(videoPath);
+});
+
+app.get('/videoDirectLinkS3', function(req, res){
+    i++;
+    console.log(`videoDirectLinkS3 hit ${i}`);
+
+    aws.config.update(
+        {
+          accessKeyId: "AKIA36CZ7MNDVFWLOZF4",
+          secretAccessKey: "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",
+          region: 'ap-southeast-1'
+        }
+    );
+    console.log(`Config updated.`);
+    var s3 = new aws.S3();
+    var options = {
+        Bucket    : 'actxa-awp-material-dev',
+        Key    : videoPathS3,
+    };
+    console.log(`Parameters updated.`);
+
+    res.attachment(videoPathS3);
+    var fileStream = s3.getObject(options).createReadStream();
+    fileStream.pipe(res);
 });
 
 app.get('/videoHLS/:file', function(request, response){
