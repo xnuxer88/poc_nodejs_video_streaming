@@ -165,8 +165,8 @@ app.get('/videoDirectLinkS3', function(req, res){
 
     aws.config.update(
         {
-          accessKeyId: "AKIA36CZ7MNDVFWLOZF4",
-          secretAccessKey: "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",
+          accessKeyId: "",
+          secretAccessKey: "",
           region: 'ap-southeast-1'
         }
     );
