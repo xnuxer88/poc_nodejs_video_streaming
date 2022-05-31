@@ -50,7 +50,9 @@ app.use('/video', express.static('videos'))
 app.use('/video2', express.static('videos'))
 app.use('/video3', express.static('videos'))
 app.use('/videoDirectLink', express.static('videos'))
-
+app.use('/videoDirectLinkTest', express.static('videos'))
+app.use('/downloadDirectLinkS3', express.static('videos'))
+app.use('/videoDirectLinkS3', express.static('videos'))
 
 app.get("/api/getHello", (req, res) => {
     res.json({ message: "Hello from server!" });
@@ -159,14 +161,22 @@ app.get('/videoDirectLink', function(req, res){
     res.download(videoPath);
 });
 
-app.get('/videoDirectLinkS3', function(req, res){
+app.get('/videoDirectLinkTest', function(req, res){
+    i++;
+    console.log(`videoDirectLinkTest hit ${i}`);
+    var fs = require("fs");
+    var readstream = fs.createReadStream(videoPath);
+    readstream.pipe(res);
+});
+
+app.get('/downloadDirectLinkS3', function(req, res){
     i++;
     console.log(`videoDirectLinkS3 hit ${i}`);
 
     aws.config.update(
         {
-          accessKeyId: "",
-          secretAccessKey: "",
+          accessKeyId: "<ACCESS KEY ID>",
+          secretAccessKey: "<SECRET ACCESS KEY>",
           region: 'ap-southeast-1'
         }
     );
@@ -178,9 +188,98 @@ app.get('/videoDirectLinkS3', function(req, res){
     };
     console.log(`Parameters updated.`);
 
-    res.attachment(videoPathS3);
-    var fileStream = s3.getObject(options).createReadStream();
-    fileStream.pipe(res);
+    return s3.getObject(params, (err, data) => {
+        if (err) console.error(err);
+        fs.writeFileSync(filePath, data.Body);
+
+        //download
+        res.download(filePath, function (err) {
+        if (err) {
+            // Handle error, but keep in mind the response may be partially-sent
+            // so check res.headersSent
+            console.log(res.headersSent)
+        } else {
+            // decrement a download credit, etc. // here remove temp file
+            fs.unlink(filePath, function (err) {
+                if (err) {
+                    console.error(err);
+                }
+                console.log('Temp File Delete');
+            });
+        }
+    })
+
+    //res.attachment(videoPathS3);
+    //res.download(s3.getObject(options));
+    //var fileStream = s3.getObject(options).createReadStream();
+    //fileStream.pipe(res);
+});
+
+
+app.get('/videoDirectLinkS3', function(req, res){
+    const range = req.headers.range;
+    if (!range) {
+        res.status(400).send("Requires Range header!");
+        return;
+    }
+    else {
+        console.log(`Range = ${range}`);
+    }
+
+    i++;
+    console.log(`videoDirectLinkS3 hit ${i}`);
+    
+    aws.config.update(
+        {
+          accessKeyId: "AKIA36CZ7MNDZN3S46GQ",
+          secretAccessKey: "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",
+          region: 'ap-southeast-1'
+        }
+    );
+    
+    console.log(`Config updated.`);
+    var s3 = new aws.S3();
+    var options = {
+        Bucket    : 'actxa-awp-material-dev',
+        Key    : videoPathS3,
+    };
+
+    s3.headObject(options, function (err, data) {
+        if (err) {
+            console.error(err);
+            return res.status(500).send("An Error Occurred");
+        }
+        console.log(`Parameters updated.`);
+        const videoSize = Number(data.ContentLength);
+        const CHUNK_SIZE = megaByteMultipler * (10 ** 6); // 1MB
+        const start = Number(range.replace(/\D/g, ""));
+        const end = Math.min(start + CHUNK_SIZE, videoSize - 1);
+
+        var params = {
+            Bucket: 'actxa-awp-material-dev',
+            Key: videoPathS3,
+            Range: range,
+        };
+
+        console.log(`Streaming[1]...`);
+        var fileStream = s3.getObject(options).createReadStream();
+        res.status(206);
+        console.log(`Streaming[2]...`);
+        res.set('Content-Type', data.ContentType);
+        res.set('Content-Disposition','inline');
+        res.set('Accept-Ranges','bytes');
+        res.set('Accept-Encoding', 'Identity');
+        res.set('Content-Range',  'bytes ' + start + '-' + end + '/' + videoSize);
+        res.set('Content-Length', data.ContentLength);
+        res.set('X-Playback-Session-Id', req.header('X-Playback-Session-Id')); // Part of the attempt to fix
+        res.set('Connection', 'keep-alive');
+        res.set('Last-Modified', data.LastModified);
+        res.set('ETag', data.ETag);
+        console.log(`Streaming[3]...`);
+        res.attachment(videoPathS3);
+        console.log(`Streaming[4]...`);
+        fileStream.pipe(res);
+    })
 });
 
 app.get('/videoHLS/:file', function(request, response){
