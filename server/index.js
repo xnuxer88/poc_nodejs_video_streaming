@@ -18,6 +18,8 @@ var storage = multer.diskStorage({
  });
 const upload = multer({ storage: storage }).single("demo_video");
 
+const ACCESS_KEY_ID = "<ACCESS_KEY_ID>";
+const SECRET_ACCESS_KEY = "<SECRET_ACCESS_KEY>";
 
 
 // var megaByteMultipler = 25;
@@ -197,8 +199,8 @@ app.get('/downloadDirectLinkS3', function(req, res){
 
     aws.config.update(
         {
-          accessKeyId: "<ACCESS KEY ID>",
-          secretAccessKey: "<SECRET ACCESS KEY>",
+          accessKeyId: ACCESS_KEY_ID,
+          secretAccessKey: SECRET_ACCESS_KEY,
           region: 'ap-southeast-1'
         }
     );
@@ -231,8 +233,8 @@ app.get('/videoDirectLinkS3', function(req, res){
     
     aws.config.update(
         {
-          accessKeyId: "AKIA36CZ7MNDZN3S46GQ",
-          secretAccessKey: "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",
+          accessKeyId: ACCESS_KEY_ID,
+          secretAccessKey: SECRET_ACCESS_KEY,
           region: 'ap-southeast-1'
         }
     );
