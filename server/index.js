@@ -3,10 +3,9 @@ const PORT = process.env.PORT || 3003;
 
 //PIPELINE PREVENT MEMORY LEAK
 // const videoPath = "videos/Sample.mp4";
-const videoPath = "videos/SampleWKeyFrame.mp4";
+const videoPath = "./videos/SampleWKeyFrame.mp4";
 const videoPathS3 = "SampleWKeyFrame.mp4";
 // const videoPath = "videos/720Video.mp4";
-
 const multer  = require('multer');
 var storage = multer.diskStorage({   
     destination: function(req, file, cb) { 
@@ -18,8 +17,8 @@ var storage = multer.diskStorage({
  });
 const upload = multer({ storage: storage }).single("demo_video");
 
-const ACCESS_KEY_ID = "<ACCESS_KEY_ID>";
-const SECRET_ACCESS_KEY = "<SECRET_ACCESS_KEY>";
+const ACCESS_KEY_ID = "AKIA36CZ7MNDS7BEGMY3";
+const SECRET_ACCESS_KEY = "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";
 
 
 // var megaByteMultipler = 25;
@@ -81,6 +80,7 @@ app.post("/api/uploadVideo", (req, res) => {
         res.send(req.file);
     })
 });
+
 
 app.post('/api/WriteJsonSchemaToFile', (req, res) => {
     var jsonSchema = req.body.jsonSchema;
@@ -179,6 +179,8 @@ app.get('/video2', (req, res) => {
     }
 });
 
+//Coba download tanpa pake pipe
+
 app.get('/videoDirectLink', function(req, res){
     i++;
     console.log(`videoDirectLink hit ${i}`);
@@ -212,10 +214,9 @@ app.get('/downloadDirectLinkS3', function(req, res){
     };
     console.log(`Parameters updated.`);
 
-    //res.attachment(videoPathS3);
-    //res.download(s3.getObject(options));
-    //var fileStream = s3.getObject(options).createReadStream();
-    //fileStream.pipe(res);
+    res.attachment(videoPathS3);
+    var fileStream = s3.getObject(options).createReadStream();
+    fileStream.pipe(res);
 });
 
 app.get('/videoDirectLinkS3', function(req, res){
