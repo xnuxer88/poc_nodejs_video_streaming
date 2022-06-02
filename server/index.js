@@ -17,8 +17,8 @@ var storage = multer.diskStorage({
  });
 const upload = multer({ storage: storage }).single("demo_video");
 
-const ACCESS_KEY_ID = "AKIA36CZ7MNDS7BEGMY3";
-const SECRET_ACCESS_KEY = "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";
+const ACCESS_KEY_ID = "<ACCESS_KEY_ID>";
+const SECRET_ACCESS_KEY = "<SECRET_ACCESS_KEY>";
 
 
 // var megaByteMultipler = 25;
