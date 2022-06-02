@@ -1,5 +1,6 @@
-var aws = require('aws-sdk')
+var aws = require('aws-sdk');
 const PORT = process.env.PORT || 3003;
+const multerS3 = require('multer-s3');
 
 //PIPELINE PREVENT MEMORY LEAK
 // const videoPath = "videos/Sample.mp4";
@@ -18,8 +19,8 @@ var storage = multer.diskStorage({
  });
 const upload = multer({ storage: storage }).single("demo_video");
 
-const ACCESS_KEY_ID = "<ACCESS_KEY_ID>";
-const SECRET_ACCESS_KEY = "<SECRET_ACCESS_KEY>";
+const ACCESS_KEY_ID = "<Access ID>";
+const SECRET_ACCESS_KEY = "<Secret Key>";
 
 
 // var megaByteMultipler = 25;
@@ -74,12 +75,48 @@ app.get("/api/getHello", (req, res) => {
 });
 
 app.post("/api/uploadVideo", (req, res) => {
+    console.log("log[1]...");
     upload(req,res, (err) =>{
         if(err) {
             res.status(400).send("Something went wrong!");
         }
+        console.log("log[2]...");
         res.send(req.file);
+        console.log("log[3]...");
     })
+});
+
+console.log(`Config updated.`);
+const s3Config = new aws.S3({
+    accessKeyId: ACCESS_KEY_ID,
+    secretAccessKey: SECRET_ACCESS_KEY,
+    region: 'ap-southeast-1'
+  });
+
+const multerS3Config = multerS3({
+    s3: s3Config,
+    bucket: 'actxa-awp-material-dev',
+    metadata: function (req, file, cb) {
+        cb(null, { fieldName: file.fieldname });
+    },
+    key: function (req, file, cb) {
+        console.log(file)
+        cb(null, new Date().toISOString() + '-' + file.originalname)
+    }
+});
+
+const uploadS3 = multer({
+    storage: multerS3Config
+})
+
+console.log(`Parameters updated.`);
+
+app.post("/api/uploadVideoS3", uploadS3.single('demo_video'),(req, res, err) => {
+    try {
+        res.send(req.file);
+    } catch (err) {
+        res.send(400);
+    }
 });
 
 app.post('/api/WriteJsonSchemaToFile', (req, res) => {
@@ -212,10 +249,9 @@ app.get('/downloadDirectLinkS3', function(req, res){
     };
     console.log(`Parameters updated.`);
 
-    //res.attachment(videoPathS3);
-    //res.download(s3.getObject(options));
-    //var fileStream = s3.getObject(options).createReadStream();
-    //fileStream.pipe(res);
+    res.attachment(videoPathS3);
+    var fileStream = s3.getObject(options).createReadStream();
+    fileStream.pipe(res);
 });
 
 app.get('/videoDirectLinkS3', function(req, res){
