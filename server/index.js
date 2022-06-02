@@ -4,10 +4,9 @@ const multerS3 = require('multer-s3');
 
 //PIPELINE PREVENT MEMORY LEAK
 // const videoPath = "videos/Sample.mp4";
-const videoPath = "videos/SampleWKeyFrame.mp4";
+const videoPath = "./videos/SampleWKeyFrame.mp4";
 const videoPathS3 = "SampleWKeyFrame.mp4";
 // const videoPath = "videos/720Video.mp4";
-
 const multer  = require('multer');
 var storage = multer.diskStorage({   
     destination: function(req, file, cb) { 
@@ -86,6 +85,7 @@ app.post("/api/uploadVideo", (req, res) => {
     })
 });
 
+<<<<<<< HEAD
 console.log(`Config updated.`);
 const s3Config = new aws.S3({
     accessKeyId: ACCESS_KEY_ID,
@@ -118,6 +118,8 @@ app.post("/api/uploadVideoS3", uploadS3.single('demo_video'),(req, res, err) => 
         res.send(400);
     }
 });
+=======
+>>>>>>> e7f23fe1b8b7686cb62d46b09657ffafdfbcc679
 
 app.post('/api/WriteJsonSchemaToFile', (req, res) => {
     var jsonSchema = req.body.jsonSchema;
@@ -215,6 +217,8 @@ app.get('/video2', (req, res) => {
         fs.createReadStream(videoPath).pipe(res);
     }
 });
+
+//Coba download tanpa pake pipe
 
 app.get('/videoDirectLink', function(req, res){
     i++;
