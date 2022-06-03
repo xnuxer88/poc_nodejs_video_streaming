@@ -6,6 +6,7 @@ const multerS3 = require('multer-s3');
 // const videoPath = "videos/Sample.mp4";
 const videoPath = "./videos/SampleWKeyFrame.mp4";
 const videoPathS3 = "SampleWKeyFrame.mp4";
+const signedUrlExpireSeconds = 60 * 30;
 // const videoPath = "videos/720Video.mp4";
 const multer  = require('multer');
 var storage = multer.diskStorage({   
@@ -18,8 +19,8 @@ var storage = multer.diskStorage({
  });
 const upload = multer({ storage: storage }).single("demo_video");
 
-const ACCESS_KEY_ID = "<Access ID>";
-const SECRET_ACCESS_KEY = "<Secret Key>";
+const ACCESS_KEY_ID = "";
+const SECRET_ACCESS_KEY = "";
 
 
 // var megaByteMultipler = 25;
@@ -73,25 +74,12 @@ app.get("/api/getHello", (req, res) => {
     res.json({ message: "Hello from server!" });
 });
 
-app.post("/api/uploadVideo", (req, res) => {
-    console.log("log[1]...");
-    upload(req,res, (err) =>{
-        if(err) {
-            res.status(400).send("Something went wrong!");
-        }
-        console.log("log[2]...");
-        res.send(req.file);
-        console.log("log[3]...");
-    })
-});
-
-<<<<<<< HEAD
 console.log(`Config updated.`);
 const s3Config = new aws.S3({
     accessKeyId: ACCESS_KEY_ID,
     secretAccessKey: SECRET_ACCESS_KEY,
     region: 'ap-southeast-1'
-  });
+});
 
 const multerS3Config = multerS3({
     s3: s3Config,
@@ -111,6 +99,18 @@ const uploadS3 = multer({
 
 console.log(`Parameters updated.`);
 
+app.post("/api/uploadVideo", (req, res) => {
+    console.log("log[1]...");
+    upload(req,res, (err) =>{
+        if(err) {
+            res.status(400).send("Something went wrong!");
+        }
+        console.log("log[2]...");
+        res.send(req.file);
+        console.log("log[3]...");
+    })
+});
+
 app.post("/api/uploadVideoS3", uploadS3.single('demo_video'),(req, res, err) => {
     try {
         res.send(req.file);
@@ -118,8 +118,18 @@ app.post("/api/uploadVideoS3", uploadS3.single('demo_video'),(req, res, err) => 
         res.send(400);
     }
 });
-=======
->>>>>>> e7f23fe1b8b7686cb62d46b09657ffafdfbcc679
+var memstorage = multer.memoryStorage();
+const uploadMem = multer({ storage: memstorage });
+app.post("/api/uploadVideoS3v2", uploadMem.single('demo_video'), async(req, res) => {
+    const file = req.file;
+    const param = {
+        Bucket: 'actxa-awp-material-dev',
+        Key: file.originalname,
+        Body: file.buffer
+    };
+    const resultS3 = await s3Config.upload(param).promise();
+    res.json({ result: resultS3 });
+});
 
 app.post('/api/WriteJsonSchemaToFile', (req, res) => {
     var jsonSchema = req.body.jsonSchema;
@@ -236,26 +246,32 @@ app.get('/videoDirectLinkTest', function(req, res){
 
 app.get('/downloadDirectLinkS3', function(req, res){
     i++;
-    console.log(`videoDirectLinkS3 hit ${i}`);
+    console.log(`downloadDirectLinkS3 hit ${i}`);
 
-    aws.config.update(
-        {
-          accessKeyId: ACCESS_KEY_ID,
-          secretAccessKey: SECRET_ACCESS_KEY,
-          region: 'ap-southeast-1'
-        }
-    );
-    console.log(`Config updated.`);
-    var s3 = new aws.S3();
     var options = {
         Bucket    : 'actxa-awp-material-dev',
         Key    : videoPathS3,
     };
-    console.log(`Parameters updated.`);
+    res.download(s3Config.download(options));
+});
 
-    res.attachment(videoPathS3);
-    var fileStream = s3.getObject(options).createReadStream();
-    fileStream.pipe(res);
+app.get('/downloadDirectLinkS3v2', function(req, res){
+    i++;
+    console.log(`downloadDirectLinkS3v2 hit ${i}`);
+    const url = "https://actxa-awp-material-dev.s3.ap-southeast-1.amazonaws.com/SampleWKeyFrame.mp4?AWSAccessKeyId=AKIA36CZ7MND55XZA7OW&Expires=1654166336&Signature=KklTlAxXDHW0oNkwGHC7pggrTo4%3D"
+    console.log(`URL : ` + url);
+    res.download(url);
+});
+
+app.get('/getLinkS3', function(req, res){
+    console.log(`logging[1]...`);
+    const s3url = s3Config.getSignedUrl('getObject', {
+        Bucket: 'actxa-awp-material-dev',
+        Key: videoPathS3,
+        Expires: signedUrlExpireSeconds
+    });
+    console.log(`logging[2]...`);
+    res.json({ url: s3url });
 });
 
 app.get('/videoDirectLinkS3', function(req, res){
@@ -271,22 +287,12 @@ app.get('/videoDirectLinkS3', function(req, res){
     i++;
     console.log(`videoDirectLinkS3 hit ${i}`);
     
-    aws.config.update(
-        {
-          accessKeyId: ACCESS_KEY_ID,
-          secretAccessKey: SECRET_ACCESS_KEY,
-          region: 'ap-southeast-1'
-        }
-    );
-    
-    console.log(`Config updated.`);
-    var s3 = new aws.S3();
     var options = {
         Bucket    : 'actxa-awp-material-dev',
         Key    : videoPathS3,
     };
 
-    s3.headObject(options, function (err, data) {
+    s3Config.headObject(options, function (err, data) {
         if (err) {
             console.error(err);
             return res.status(500).send("An Error Occurred");
@@ -296,12 +302,6 @@ app.get('/videoDirectLinkS3', function(req, res){
         const CHUNK_SIZE = megaByteMultipler * (10 ** 6); // 1MB
         const start = Number(range.replace(/\D/g, ""));
         const end = Math.min(start + CHUNK_SIZE, videoSize - 1);
-
-        var params = {
-            Bucket: 'actxa-awp-material-dev',
-            Key: videoPathS3,
-            Range: range,
-        };
 
         console.log(`Streaming[1]...`);
         var fileStream = s3.getObject(options).createReadStream();
@@ -346,7 +346,6 @@ app.get('/videoHLS/:file', function(request, response){
             response.end(content, 'utf-8');
         }
     });
-
 });
 
 app.get('/videoHLSDirectLink', function(req, res){
