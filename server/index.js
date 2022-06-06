@@ -132,9 +132,10 @@ app.post("/api/uploadVideoS3v2", uploadMem.single('demo_video'), async(req, res)
     console.log(param, 'awa');
     const resultS3 = await s3Config.upload(param).promise();
     console.log(file);
-    console.log(memstorage, 'Storage');
+    // console.log(param.Body.toString());
     if(file.mimetype.includes('mp4')) {
-        getVideoDurationInSeconds('./uploads/' + file.originalname).then((duration) => {
+        getVideoDurationInSeconds('https://actxa-awp-material-dev.s3.ap-southeast-1.amazonaws.com/SampleWKeyFrame.mp4?AWSAccessKeyId=AKIA36CZ7MND55XZA7OW&Expires=1654516575&Signature=%2FItwvCifcGY4pdvvZidllAKdiPU%3D').then((duration) => {
+        // getVideoDurationInSeconds('./uploads/' + file.originalname).then((duration) => {
             console.log(duration);
             var minutes = Math.floor(duration/60);
             var seconds = duration - minutes * 60;
