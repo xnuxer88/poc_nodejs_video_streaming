@@ -1,7 +1,7 @@
 var aws = require('aws-sdk');
 const PORT = process.env.PORT || 3003;
 const multerS3 = require('multer-s3');
-
+const { getVideoDurationInSeconds } = require('get-video-duration')
 //PIPELINE PREVENT MEMORY LEAK
 // const videoPath = "videos/Sample.mp4";
 const videoPath = "./videos/SampleWKeyFrame.mp4";
@@ -47,6 +47,7 @@ var express = require('express'),
 var bodyParser = require('body-parser');
 
 var cors = require('cors');
+const { off } = require('process');
 var corsOptions = {
     origin: ["http://localhost:3000", "https://hls-js-dev.netlify.app"],
     optionsSuccessStatus: 200 // For legacy browser support
@@ -74,21 +75,6 @@ app.get("/api/getHello", (req, res) => {
     res.json({ message: "Hello from server!" });
 });
 
-<<<<<<< HEAD
-=======
-app.post("/api/uploadVideo", (req, res) => {
-    console.log("log[1]...");
-    upload(req,res, (err) =>{
-        if(err) {
-            res.status(400).send("Something went wrong!");
-        }
-        console.log("log[2]...");
-        res.send(req.file);
-        console.log("log[3]...");
-    })
-});
-
->>>>>>> 7423d8309b12543e9754f446463481dca52fc096
 console.log(`Config updated.`);
 const s3Config = new aws.S3({
     accessKeyId: ACCESS_KEY_ID,
@@ -133,7 +119,7 @@ app.post("/api/uploadVideoS3", uploadS3.single('demo_video'),(req, res, err) => 
         res.send(400);
     }
 });
-<<<<<<< HEAD
+
 var memstorage = multer.memoryStorage();
 const uploadMem = multer({ storage: memstorage });
 app.post("/api/uploadVideoS3v2", uploadMem.single('demo_video'), async(req, res) => {
@@ -143,11 +129,21 @@ app.post("/api/uploadVideoS3v2", uploadMem.single('demo_video'), async(req, res)
         Key: file.originalname,
         Body: file.buffer
     };
+    console.log(param, 'awa');
     const resultS3 = await s3Config.upload(param).promise();
+    console.log(file);
+    console.log(memstorage, 'Storage');
+    if(file.mimetype.includes('mp4')) {
+        getVideoDurationInSeconds('./uploads/' + file.originalname).then((duration) => {
+            console.log(duration);
+            var minutes = Math.floor(duration/60);
+            var seconds = duration - minutes * 60;
+            var seconds = ~~seconds;
+            console.log('the duration of video is: ' + minutes + ' minutes and ' + seconds + ' seconds')
+        })
+    }
     res.json({ result: resultS3 });
 });
-=======
->>>>>>> 7423d8309b12543e9754f446463481dca52fc096
 
 app.post('/api/WriteJsonSchemaToFile', (req, res) => {
     var jsonSchema = req.body.jsonSchema;
@@ -245,8 +241,6 @@ app.get('/video2', (req, res) => {
         fs.createReadStream(videoPath).pipe(res);
     }
 });
-
-//Coba download tanpa pake pipe
 
 app.get('/videoDirectLink', function(req, res){
     i++;
