@@ -141,10 +141,12 @@ app.post("/api/uploadVideoS3v2", uploadMem.single('demo_video'), async(req, res)
     };
     console.log(param, 'awa');
     const resultS3 = await s3Config.upload(param).promise();
+    console.log(file);
     getLink();
+    // console.log(param.Body.toString());
     if(file.mimetype.includes('mp4')) {
-        // getVideoDurationInSeconds('./uploads/' + file.originalname).then((duration) => {
         getVideoDurationInSeconds(getawss3url).then((duration) => {
+        // getVideoDurationInSeconds('./uploads/' + file.originalname).then((duration) => {
             console.log(duration);
             var minutes = Math.floor(duration/60);
             var seconds = duration - minutes * 60;
