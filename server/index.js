@@ -120,6 +120,16 @@ app.post("/api/uploadVideoS3", uploadS3.single('demo_video'),(req, res, err) => 
     }
 });
 
+let getawss3url;
+function getLink() {
+    getawss3url = s3Config.getSignedUrl('getObject', {
+        Bucket: 'actxa-awp-material-dev',
+        Key: videoPathS3,
+        Expires: signedUrlExpireSeconds
+    });
+    console.log(getawss3url)
+}
+
 var memstorage = multer.memoryStorage();
 const uploadMem = multer({ storage: memstorage });
 app.post("/api/uploadVideoS3v2", uploadMem.single('demo_video'), async(req, res) => {
@@ -131,10 +141,10 @@ app.post("/api/uploadVideoS3v2", uploadMem.single('demo_video'), async(req, res)
     };
     console.log(param, 'awa');
     const resultS3 = await s3Config.upload(param).promise();
-    console.log(file);
-    console.log(memstorage, 'Storage');
+    getLink();
     if(file.mimetype.includes('mp4')) {
-        getVideoDurationInSeconds('./uploads/' + file.originalname).then((duration) => {
+        // getVideoDurationInSeconds('./uploads/' + file.originalname).then((duration) => {
+        getVideoDurationInSeconds(getawss3url).then((duration) => {
             console.log(duration);
             var minutes = Math.floor(duration/60);
             var seconds = duration - minutes * 60;
